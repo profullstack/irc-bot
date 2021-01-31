@@ -28,6 +28,7 @@ Available commands:
  .c <crypto>
  .s <stock>
  .join <channel>
+ .trend
  .short <url>
 `);
 });
