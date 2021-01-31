@@ -4,7 +4,6 @@ const bot = new IRC.Client();
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-
 bot.connect({
 	host: 'irc.freenode.net',
 	port: 6667,
@@ -22,38 +21,85 @@ bot.on('raw', event => {
 
 //bot.join('##wallstreetbets');
 
-bot.matchMessage(/^!s /, async (event) => {
+bot.matchMessage(/^\.help/, async (event) => {
+	console.log(event);
+	event.reply(`
+Available commands:
+ .c <crypto>
+ .s <stock>
+ .join <channel>
+ .short <url>
+`);
+});
+
+bot.matchMessage(/^\.s /, async (event) => {
 	console.log(event);
 	const ticker = event.message.split(' ')[1];
 	const res = await stock(ticker);
 	event.reply(`${ticker.toUpperCase()}: ${res}`);
 });
 
-bot.matchMessage(/^!c /, async (event) => {
+bot.matchMessage(/^\.c /, async (event) => {
 	console.log(event);
 	const ticker = event.message.split(' ')[1];
 	const res = await crypto(ticker);
 	const data = res.data[0];
-	event.reply(`${ticker.toUpperCase()}: ${data.price} volume: ${data.volume}`);
+	event.reply(`${ticker.toUpperCase()}: ${data.price} volume: ${data.volume} rank: ${data.rank}`);
+});
+
+bot.matchMessage(/^\.short /, async (event) => {
+	console.log(event);
+	const url = event.message.split(' ')[1];
+	const res = await cuttly(url);
+	event.reply(`${res.url.title}: ${res.url.shortLink}`);
+});
+
+bot.matchMessage(/^\.trend/, async (event) => {
+	console.log(event);
+	const stocks = await get('https://api.swaggystocks.com/api/wsb/sentiment/top?limit=5');
+	const cryptos = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.day&order=descending&currency=USD&rank.min=300');
+	const cryptoshr = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.hour&order=descending&currency=USD&rank.min=300');
+	event.reply(`trending stocks: ${stocks.map(t => t.ticker).join(', ')} cryptos: - 1hr: ${cryptoshr.data.map(t => t.code).join(', ')} - 24hr: ${cryptos.data.map(t => t.code).join(', ')}`);
 });
 
 
-/*
-bot.matchMessage(/^!identify/, event => {
+bot.matchMessage(/^\.identify/, event => {
 	console.log(bot.options);
-	bot.say('nickserv', 'identify' + bot.options.account + ' ' + bot.options.password);
+	bot.say('nickserv', `identify ${bot.options.account.account} ${bot.options.account.password}`);
 });
 
-bot.matchMessage(/^!register/, event => {
+bot.matchMessage(/^\.verify/, event => {
 	console.log(bot.options);
-	bot.say('nickserv', 'register' + bot.options.password, bot.options.email);
+	const pass = event.message.split(' ')[1];
+	bot.say('nickserv', `verify register ${bot.options.account.account} ${pass}`);
 });
-*/
 
-bot.matchMessage(/^!join/, function(event) {
+bot.matchMessage(/^\.register/, event => {
+	console.log(bot.options);
+	bot.say('nickserv', `register ${bot.options.account.password} ${bot.options.account.email}`);
+});
+
+bot.matchMessage(/^\.joinall/, function(event) {
+	console.log(event);
+	const chan = event.message.split(' ')[1];
+	bot.join('##wallstreetbets');
+	bot.join('##altstreetbets');
+	bot.join('##economics');
+	bot.join('#bitcoin');
+	bot.join('#litecoin');
+	bot.join('#polkadot');
+});
+
+bot.matchMessage(/^\.join /, function(event) {
 	console.log(event);
 	const chan = event.message.split(' ')[1];
 	bot.join(chan);
+});
+
+bot.matchMessage(/^\.part/, function(event) {
+	console.log(event);
+	const chan = event.message.split(' ')[1];
+	bot.part(chan);
 });
 
 async function stock(ticker) {
@@ -71,6 +117,12 @@ async function crypto(pair) {
 	}
 
 	const res = await get(`https://http-api.livecoinwatch.com/coins?currency=${ticker[1].toUpperCase()}&only=${ticker[0].toUpperCase()}`);
+	console.log('res: ', res);
+	return res;
+};
+
+async function cuttly(url) {
+	const res = await get(`https://cutt.ly/api/api.php?key=42c4bc34bdff9b4b2237cd709e11cf95f2fe3&short=${encodeURIComponent(url)}`);
 	console.log('res: ', res);
 	return res;
 };
