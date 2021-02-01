@@ -128,7 +128,6 @@ bot.matchMessage(/^\.joinall/, function(event) {
 	bot.join('##wallstreetbets');
 	bot.join('##altstreetbets');
 	bot.join('##economics');
-	bot.join('#bitcoin');
 	bot.join('#litecoin');
 	bot.join('#polkadot');
 });
