@@ -30,6 +30,11 @@ Available commands:
  .join <channel>
  .trend
  .short <url>
+ .joke
+ .ball <question>
+ .hot
+ .new
+ .dd new|hot|top|comments
 `);
 });
 
@@ -55,12 +60,49 @@ bot.matchMessage(/^\.short /, async (event) => {
 	event.reply(`${res.url.title}: ${res.url.shortLink}`);
 });
 
+bot.matchMessage(/^\.joke/, async (event) => {
+	console.log(event);
+	const res = await get('https://v2.jokeapi.dev/joke/Any?type=single');
+	event.reply(`${res.category}: ${res.joke}`);
+});
+
+bot.matchMessage(/^\.hot/, async (event) => {
+	console.log(event);
+	const res = await get('https://www.reddit.com/r/wallstreetbets/hot.json');
+	const item = res.data.children[0].data;
+	event.reply(`${item.title}: https://reddit.com/${item.id}`);
+});
+
+bot.matchMessage(/^\.new/, async (event) => {
+	console.log(event);
+	const res = await get('https://www.reddit.com/r/wallstreetbets/new.json');
+	const item = res.data.children[0].data;
+	event.reply(`${item.title}: https://reddit.com/${item.id}`);
+});
+
+bot.matchMessage(/^\.dd/, async (event) => {
+	console.log(event);
+	const sort = event.message.split(' ');
+	const res = await get(`https://www.reddit.com/r/wallstreetbets/search.json?sort=${sort[1] || 'new'}&q=flair%3ADD&restrict_sr=on&t=day`);
+	const item = res.data.children[0].data;
+	event.reply(`${item.title}: https://reddit.com/${item.id}`);
+});
+
+
+bot.matchMessage(/^\.ball/, async (event) => {
+	console.log(event);
+	const q = event.message.match(/^.ball (.*)$/)[1];
+	const res = await get(`https://8ball.delegator.com/magic/JSON/${encodeURIComponent(q)}`);
+	event.reply(`${res.magic.question}: ${res.magic.answer}`);
+});
+
+
 bot.matchMessage(/^\.trend/, async (event) => {
 	console.log(event);
 	const stocks = await get('https://api.swaggystocks.com/api/wsb/sentiment/top?limit=5');
 	const cryptos = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.day&order=descending&currency=USD&rank.min=300');
 	const cryptoshr = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.hour&order=descending&currency=USD&rank.min=300');
-	event.reply(`trending stocks: ${stocks.map(t => t.ticker).join(', ')} cryptos: - 1hr: ${cryptoshr.data.map(t => t.code).join(', ')} - 24hr: ${cryptos.data.map(t => t.code).join(', ')}`);
+	event.reply(`trending stocks: ${stocks.map(t => t.ticker).join(', ')} cryptos: - 1hr: ${cryptoshr.data.map(t => t.code).join(', ')} - 24hr: ${cryptos.data.map(t => t.code).join(', ')} 🚀🚀🚀💎🙌🦍`);
 });
 
 
