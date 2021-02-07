@@ -42,6 +42,7 @@ Available commands:
  .moon
  .amt c <ticker> <amount>
  .amt s <ticker> <amount>
+ .movers
 `);
 });
 
@@ -103,6 +104,13 @@ bot.matchMessage(/^\.shorts/, async (event) => {
 	const res = await shorts();
 	event.reply(`short interest: ${res} 🚀🚀🚀💎🙌🦍`);
 });
+
+bot.matchMessage(/^\.movers/, async (event) => {
+	console.log(event);
+	const res = await movers();
+	event.reply(`movers: ticker movement price -- ${res} 🚀🚀🚀💎🙌🦍`);
+});
+
 
 bot.matchMessage(/^\.penny/, async (event) => {
 	console.log(event);
@@ -212,6 +220,14 @@ async function shorts() {
 	console.log('res: ', res);
 	return res.stdout;
 };
+
+async function movers() {
+	const res = await exec(`xidel https://unbiastock.com/movers.php -e '//table[@id="table_id2"]/tbody/tr/th[1]|//table[@id="table_id2"]/tbody/tr/th[2]|//table[@id="table_id2"]/tbody/tr/th[8]' | head -n 15 | tr -s '\n' ' '`);
+
+	console.log('res: ', res);
+	return res.stdout;
+};
+
 
 async function penny() {
 	const res = await exec(`xidel https://www.pennystockflow.com/ -e '//table[@class="stocks"]//(td[1]|td[2]|td[3])' | head -n 18 | tr -s '\n' ' '`);
