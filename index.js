@@ -23,7 +23,7 @@ bot.on('raw', event => {
 
 bot.matchMessage(/^\.help/, async (event) => {
 	console.log(event);
-	event.reply(`
+	bot.say(event.nick, `
 Available commands:
  .c <crypto>
  .s <stock>
@@ -40,8 +40,8 @@ Available commands:
  .shorts
  .penny
  .moon
- .amt c <ticker>
- .amt s <ticker>
+ .amt c <ticker> <amount>
+ .amt s <ticker> <amount>
 `);
 });
 
