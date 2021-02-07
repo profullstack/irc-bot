@@ -35,6 +35,13 @@ Available commands:
  .hot
  .new
  .dd new|hot|top|comments
+ .brisk stock|crypto <ticker>
+ .brisk topic <subject>
+ .shorts
+ .penny
+ .moon
+ .amt c <ticker>
+ .amt s <ticker>
 `);
 });
 
@@ -53,6 +60,26 @@ bot.matchMessage(/^\.c /, async (event) => {
 	event.reply(`${ticker.toUpperCase()}: ${data.price} volume: ${data.volume} rank: ${data.rank}`);
 });
 
+bot.matchMessage(/^\.amt c/, async (event) => {
+	console.log(event);
+	const ticker = event.message.split(' ')[2];
+	const amt  = event.message.split(' ')[3];
+	const res = await crypto(ticker);
+	const data = res.data[0];
+
+	event.reply(`${ticker.toUpperCase()}: ${amt}*${data.price} =  $${(amt * data.price).toFixed(2)}`);
+});
+
+bot.matchMessage(/^\.amt s/, async (event) => {
+	console.log(event);
+	const ticker = event.message.split(' ')[2];
+	const amt  = event.message.split(' ')[3];
+	const res = await stock(ticker);
+	const data = res.split(' ');
+
+	event.reply(`${ticker.toUpperCase()}: ${amt}*${data[1]} =  $${(amt * data[1]).toFixed(2)}`);
+});
+
 bot.matchMessage(/^\.short /, async (event) => {
 	console.log(event);
 	const url = event.message.split(' ')[1];
@@ -66,10 +93,27 @@ bot.matchMessage(/^\.joke/, async (event) => {
 	event.reply(`${res.category}: ${res.joke}`);
 });
 
+bot.matchMessage(/^\.moon/, async (event) => {
+	event.reply(`🌎 ° 🌓 • .°• 🚀 ✯ ★ * ° 🛰 °· 🪐 . • ° ★ • ☄ ▁▂▃▄▅▆▇▇▆▅▄▃▁▂ Hold till we See The moon 🔥🔥`);
+});
+
+
+bot.matchMessage(/^\.shorts/, async (event) => {
+	console.log(event);
+	const res = await shorts();
+	event.reply(`short interest: ${res} 🚀🚀🚀💎🙌🦍`);
+});
+
+bot.matchMessage(/^\.penny/, async (event) => {
+	console.log(event);
+	const res = await penny();
+	event.reply(`penny stocks: ${res} 🚀🚀🚀💎🙌🦍`);
+});
+
 bot.matchMessage(/^\.hot/, async (event) => {
 	console.log(event);
 	const res = await get('https://www.reddit.com/r/wallstreetbets/hot.json');
-	const item = res.data.children[0].data;
+	const item = res.data.children[3].data;
 	event.reply(`${item.title}: https://reddit.com/${item.id}`);
 });
 
@@ -88,6 +132,16 @@ bot.matchMessage(/^\.dd/, async (event) => {
 	event.reply(`${item.title}: https://reddit.com/${item.id}`);
 });
 
+bot.matchMessage(/^\.brisk /, async (event) => {
+	console.log(event);
+	const opts = event.message.split(' ');
+	const url = `https://briskreader.com/api/1/${opts[1]}s/${opts[1] === 'topic' ? opts[2] : opts[2].toUpperCase()}`
+	console.log(url);
+	const res = await get(url);
+	console.log(res.slice(0, 5));
+	const item = res[0];
+	event.reply(`${item.title}${item.siteName ? ' ('+item.siteName+')' : ''} https://briskreader.com/link/${item.shortId}`);
+});
 
 bot.matchMessage(/^\.ball/, async (event) => {
 	console.log(event);
@@ -130,6 +184,7 @@ bot.matchMessage(/^\.joinall/, function(event) {
 	bot.join('##economics');
 	bot.join('#litecoin');
 	bot.join('#polkadot');
+	bot.join('#trading');
 });
 
 bot.matchMessage(/^\.join /, function(event) {
@@ -150,6 +205,22 @@ async function stock(ticker) {
 	console.log('res: ', res);
 	return res.stdout;
 };
+
+async function shorts() {
+	const res = await exec(`xidel https://www.highshortinterest.com/ -e '//table[@class="stocks"]/tbody/tr/td[1]|//table[@class="stocks"]/tbody/tr/td[4]' | head -n 22 | tr -s '\n' ' '`);
+
+	console.log('res: ', res);
+	return res.stdout;
+};
+
+async function penny() {
+	const res = await exec(`xidel https://www.pennystockflow.com/ -e '//table[@class="stocks"]//(td[1]|td[2]|td[3])' | head -n 18 | tr -s '\n' ' '`);
+
+	console.log('res: ', res);
+	return res.stdout;
+};
+
+
 
 async function crypto(pair) {
 	const ticker = pair.split(/[\/-]/);
