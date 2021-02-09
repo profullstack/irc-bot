@@ -43,6 +43,8 @@ Available commands:
  .amt c <ticker> <amount>
  .amt s <ticker> <amount>
  .movers
+ .ipos
+ .news <ticker>
 `);
 });
 
@@ -111,6 +113,19 @@ bot.matchMessage(/^\.movers/, async (event) => {
 	event.reply(`movers: ticker movement price -- ${res} 🚀🚀🚀💎🙌🦍`);
 });
 
+bot.matchMessage(/^\.ipos/, async (event) => {
+	console.log(event);
+	const res = await ipos();
+	event.reply(`ipos: ${res} 🚀🚀🚀💎🙌🦍`);
+});
+
+bot.matchMessage(/^\.news /, async (event) => {
+	console.log(event);
+	const ticker = event.message.split(' ')[1]
+	const res = await news(ticker);
+	event.reply(`${ticker.toUpperCase()} - ${res}`);
+});
+
 
 bot.matchMessage(/^\.penny/, async (event) => {
 	console.log(event);
@@ -125,7 +140,7 @@ bot.matchMessage(/^\.hot/, async (event) => {
 	event.reply(`${item.title}: https://reddit.com/${item.id}`);
 });
 
-bot.matchMessage(/^\.new/, async (event) => {
+bot.matchMessage(/^\.new$/, async (event) => {
 	console.log(event);
 	const res = await get('https://www.reddit.com/r/wallstreetbets/new.json');
 	const item = res.data.children[0].data;
@@ -228,6 +243,34 @@ async function movers() {
 	return res.stdout;
 };
 
+async function ipos() {
+	const res = await exec(`xidel https://www.marketwatch.com/tools/ipo-calendar --xquery '
+		    for $row in //table/tbody/tr let $name := $row/td[1]/*/normalize-space(text()) let $ticker := $row/td[2]/text() let $price := $row/td[4]/text() let $shares := $row/td[5]/normalize-space(text()) where boolean($name) and boolean($shares) and boolean($ticker) and not(contains($ticker, ".U")) order by $shares descending return <stock>({$ticker}) {$name}: {$price} {$shares} shs</stock>' | head -n 5 | tr '\n' ' '`);
+
+	console.log('res: ', res);
+	return res.stdout;
+};
+
+async function news(ticker) {
+	const res = await exec(` xidel 'https://www.cnbc.com/quotes/${ticker.toUpperCase()}' -s --xquery '
+			for $item in //div[@class="LatestNews-latestNews"]//div[@class="LatestNews-newsFeed"]
+				let $title := $item//a[@href]/normalize-space(text())
+				let $link := $item//a[@href]/@href
+				let $date := $item//div[@class="LatestNews-timestamp"]/normalize-space(text())
+		    return <div>{$date} - {$title}: {data($link)}</div>' \
+		| head -n 1`);
+		
+	console.log('res: ', res);
+	const url = res.stdout.match(/(https?[^\s]+)/ig)[0]
+	console.log('url: ', url);
+	const link = await cuttly(url);
+	console.log('short: ', link.url.shortLink);
+	console.log('news: ', res.stdout);
+	res.stdout = res.stdout.replace(url, link.url.shortLink);
+	console.log('news: ', res.stdout);
+
+	return res.stdout;
+};
 
 async function penny() {
 	const res = await exec(`xidel https://www.pennystockflow.com/ -e '//table[@class="stocks"]//(td[1]|td[2]|td[3])' | head -n 18 | tr -s '\n' ' '`);
