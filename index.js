@@ -15,6 +15,15 @@ bot.connect({
 	},
 });
 
+setTimeout(() => {
+	bot.join('##wallstreetbets');
+	bot.join('##altstreetbets');
+	bot.join('##economics');
+	bot.join('#litecoin');
+	bot.join('#polkadot');
+	bot.join('#trading');
+}, 60000);
+
 bot.on('raw', event => {
 	console.log(event);
 });
@@ -23,8 +32,7 @@ bot.on('raw', event => {
 
 bot.matchMessage(/^\.help/, async (event) => {
 	console.log(event);
-	bot.say(event.nick, `
-Available commands:
+	const lines = `Available commands:
  .c <crypto>
  .s <stock>
  .join <channel>
@@ -45,7 +53,12 @@ Available commands:
  .movers
  .ipos
  .news <ticker>
-`);
+`.split('\n');
+
+	for (let line of lines) {
+		bot.say(event.nick, line);
+		await sleep(1000);
+	}
 });
 
 bot.matchMessage(/https?:\/\/[^\s+]/, async (event) => {
@@ -54,6 +67,19 @@ bot.matchMessage(/https?:\/\/[^\s+]/, async (event) => {
 	const res = await cuttly(url);
 	event.reply(`${res.url.title}: ${res.url.shortLink}`);
 });
+
+bot.matchMessage(/(?:^|\W)(hot|damn)(?:$|\W)/, async (event) => {
+	console.log(event);
+	event.reply(`${event.nick} 🚀🚀🔥🔥`);
+});
+
+/*
+bot.matchMessage(/(?:^|\W)(fuck|shit)(?:$|\W)/, async (event) => {
+	console.log(event);
+	event.reply(`${event.nick} did you just swear???? what the fuck dude, you can't be swearing in here!`);
+});
+*/
+
 
 bot.matchMessage(/^\.s /, async (event) => {
 	console.log(event);
@@ -66,6 +92,7 @@ bot.matchMessage(/^\.c /, async (event) => {
 	console.log(event);
 	const ticker = event.message.split(' ')[1];
 	const res = await crypto(ticker);
+	if (!res.data[0]) return;
 	const data = res.data[0];
 	event.reply(`${ticker.toUpperCase()}: ${data.price} volume: ${data.volume} rank: ${data.rank}`);
 });
@@ -156,10 +183,15 @@ bot.matchMessage(/^\.new$/, async (event) => {
 
 bot.matchMessage(/^\.dd/, async (event) => {
 	console.log(event);
-	const sort = event.message.split(' ');
-	const res = await get(`https://www.reddit.com/r/wallstreetbets/search.json?sort=${sort[1] || 'new'}&q=flair%3ADD&restrict_sr=on&t=day`);
-	const item = res.data.children[0].data;
-	event.reply(`${item.title}: https://reddit.com/${item.id}`);
+
+	try {
+		const sort = event.message.split(' ');
+		const res = await get(`https://www.reddit.com/r/wallstreetbets/search.json?sort=${sort[1] || 'new'}&q=flair%3ADD&restrict_sr=on&t=day`);
+		const item = res.data.children[0].data;
+		event.reply(`${item.title}: https://reddit.com/${item.id}`);
+	} catch(err) {
+		console.error(err);
+	}
 });
 
 bot.matchMessage(/^\.brisk /, async (event) => {
@@ -183,10 +215,14 @@ bot.matchMessage(/^\.ball/, async (event) => {
 
 bot.matchMessage(/^\.trend/, async (event) => {
 	console.log(event);
-	const stocks = await get('https://api.swaggystocks.com/api/wsb/sentiment/top?limit=5');
-	const cryptos = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.day&order=descending&currency=USD&rank.min=300');
-	const cryptoshr = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.hour&order=descending&currency=USD&rank.min=300');
-	event.reply(`trending stocks: ${stocks.map(t => t.ticker).join(', ')} cryptos: - 1hr: ${cryptoshr.data.map(t => t.code).join(', ')} - 24hr: ${cryptos.data.map(t => t.code).join(', ')} 🚀🚀🚀💎🙌🦍`);
+	try {
+		const stocks = await get('https://api.swaggystocks.com/wsb/sentiment/top?limit=5');
+		const cryptos = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.day&order=descending&currency=USD&rank.min=300');
+		const cryptoshr = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.hour&order=descending&currency=USD&rank.min=300');
+		event.reply(`trending stocks: ${stocks.map(t => t.ticker).join(', ')} cryptos: - 1hr: ${cryptoshr.data.map(t => t.code).join(', ')} - 24hr: ${cryptos.data.map(t => t.code).join(', ')} 🚀🚀🚀💎🙌🦍`);
+	} catch(err) {
+		console.error(err);
+	}
 });
 
 
@@ -268,8 +304,10 @@ async function news(ticker) {
 		| head -n 1`);
 		
 	console.log('res: ', res);
-	const url = res.stdout.match(/(https?[^\s]+)/ig)[0]
+	const matches = res.stdout.match(/(https?[^\s]+)/ig)
+	const url = matches && matches[0] 
 	console.log('url: ', url);
+	if (!url) return;
 	const link = await cuttly(url);
 	console.log('short: ', link.url.shortLink);
 	console.log('news: ', res.stdout);
@@ -315,4 +353,8 @@ async function get(url) {
 	}
 
 	throw(res);
+}
+
+function sleep(milliseconds) {
+	  return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
