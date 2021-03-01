@@ -22,6 +22,7 @@ setTimeout(() => {
 	bot.join('#litecoin');
 	bot.join('#polkadot');
 	bot.join('#trading');
+	bot.join('#bitcoin-pricetalk');
 }, 60000);
 
 bot.on('raw', event => {
@@ -53,6 +54,9 @@ bot.matchMessage(/^\.help/, async (event) => {
  .movers
  .ipos
  .news <ticker>
+ .convert <amount> <from> <to>
+ .time london, uk
+ .fortune
 `.split('\n');
 
 	for (let line of lines) {
@@ -160,6 +164,25 @@ bot.matchMessage(/^\.news /, async (event) => {
 	event.reply(`${ticker.toUpperCase()} - ${res}`);
 });
 
+bot.matchMessage(/^\.convert/, async (event) => {
+	console.log(event);
+	const [ cmd, amt, from, to ] = event.message.split(' ')
+	const res = await convert(from, to);
+	const amount = res[to.toUpperCase()] * amt;
+	event.reply(`${amt} ${from} to ${to} = ${amount}`);
+});
+
+
+bot.matchMessage(/^\.time/, async (event) => {
+	console.log(event);
+	let [ city, country ] = event.message.split(',')
+	city = city.replace('.time', '').trim().replace(/\s+/g, '-');
+	country = country.trim().replace(/\s+/g, '-');
+
+	const res = await time(country, city);
+	event.reply(`${city}, ${country} ${res}`);
+});
+
 
 bot.matchMessage(/^\.penny/, async (event) => {
 	console.log(event);
@@ -211,6 +234,27 @@ bot.matchMessage(/^\.ball/, async (event) => {
 	const res = await get(`https://8ball.delegator.com/magic/JSON/${encodeURIComponent(q)}`);
 	event.reply(`${res.magic.question}: ${res.magic.answer}`);
 });
+
+bot.matchMessage(/^\.fortune/, async (event) => {
+	console.log(event);
+	const res = await fortune();
+
+	for (let line of res) {
+		event.reply(`${line}`);
+	}
+});
+
+bot.matchMessage(/^\.cowsay/, async (event) => {
+	console.log(event);
+	const quote = event.message.match(/^\.cowsay (.*)/)[1];
+	console.log(quote);
+	const res = await cowsay(quote);
+
+	for (let line of res) {
+		event.reply(line);
+	}
+});
+
 
 
 bot.matchMessage(/^\.trend/, async (event) => {
@@ -265,12 +309,35 @@ bot.matchMessage(/^\.part/, function(event) {
 	bot.part(chan);
 });
 
+async function fortune() {
+	const res = await exec(`fortune`);
+
+	console.log('res: ', res);
+	return res.stdout.split('\n');
+};
+
+async function cowsay(quote) {
+	const res = await exec(`cowsay ${quote}`);
+
+	console.log('res: ', res);
+	return res.stdout.split('\n');
+};
+
+
 async function stock(ticker) {
 	const res = await exec(`xidel 'https://www.marketwatch.com/investing/stock/${ticker}' -e '//div[@class="intraday__data"]|//div[@class="intraday__volume"]' | tr -s '\n' ' '`);
 
 	console.log('res: ', res);
 	return res.stdout;
 };
+
+async function time(country, city) {
+	const res = await exec(`xidel -s 'https://www.timeanddate.com/worldclock/${country.toLowerCase()}${city ? '/'+city.toLowerCase() : ''}' -e '//span[@id="ct"]'`);
+
+	console.log('res: ', res);
+	return res.stdout;
+};
+
 
 async function shorts() {
 	const res = await exec(`xidel https://www.highshortinterest.com/ -e '//table[@class="stocks"]/tbody/tr/td[1]|//table[@class="stocks"]/tbody/tr/td[4]' | head -n 22 | tr -s '\n' ' '`);
@@ -293,6 +360,13 @@ async function ipos() {
 	console.log('res: ', res);
 	return res.stdout;
 };
+
+async function convert(from, to) {
+	const res = await get(`https://min-api.cryptocompare.com/data/price?fsym=${from.toUpperCase()}&tsyms=${to.toUpperCase()}`);
+	console.log('res: ', res);
+	return res;
+};
+
 
 async function news(ticker) {
 	const res = await exec(`xidel 'https://www.finviz.com/quote.ashx?t=${ticker.toLowerCase()}' -s --xquery '
