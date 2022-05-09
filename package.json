@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "npm run kill; npx pm2 start ./index.js",
-		"kill": "npx pm2 del all",
+    "kill": "npx pm2 del all",
     "log": "npx pm2 logs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -3,7 +3,7 @@ const IRC = require('irc-framework');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const servers = [
-	'irc.freenode.net',
+//	'irc.freenode.net',
 	'irc.libera.chat'
 ];
 
@@ -14,9 +14,9 @@ const servers = [
 		bot.connect({
 			host: server,
 			port: 6667,
-			nick: 'mywsbbot',
+			nick: 'mywsbbot100',
 			account: {
-					account: 'mywsbbot',
+					account: 'mywsbbot100',
 					password: 'asdf1234',
 					email: 'chovy@pm.me',
 			},
@@ -30,11 +30,9 @@ async function doStuff(bot) {
 	
 
 	setTimeout(() => {
-		bot.join('##wallstreetbets');
 		bot.join('#wallstreetbets');
-		bot.join('##altstreetbets');
 		bot.join('#altstreetbets');
-		bot.join('##economics');
+		bot.join('#ethtrader');
 		bot.join('#economics');
 		bot.join('#litecoin');
 		bot.join('#polkadot');
@@ -86,7 +84,8 @@ async function doStuff(bot) {
 		console.log(event);
 		const url = event.message.match(/(https?:\/\/[^\s]+)/)[1];
 		const res = await cuttly(url);
-		event.reply(`${res.url.title}: ${res.url.shortLink}`);
+		// event.reply(`${res.url.title}: ${res.url.shortLink}`);
+		event.reply(`${res.url.title}`);
 	});
 
 	bot.matchMessage(/(?:^|\W)(hot|damn)(?:$|\W)/, async (event) => {
