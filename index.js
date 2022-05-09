@@ -72,6 +72,7 @@ async function doStuff(bot) {
 	 .convert <amount> <from> <to>
 	 .time london, uk
 	 .fortune
+	 .t
 	`.split('\n');
 
 		for (let line of lines) {
@@ -107,6 +108,16 @@ async function doStuff(bot) {
 		const res = await stock(ticker);
 		event.reply(`${ticker.toUpperCase()}: ${res}`);
 	});
+
+	bot.matchMessage(/^\.t /, async (event) => {
+		console.log(event);
+		const loc = event.message.split(/^\.t /)[1];
+		console.log('msg: ', event.message);
+		console.log('loc: ', loc);
+		const res = await localtime(loc);
+		event.reply(`${res}`);
+	});
+
 
 	bot.matchMessage(/^\.c /, async (event) => {
 		console.log(event);
@@ -340,6 +351,23 @@ async function cowsay(quote) {
 	return res.stdout.split('\n');
 };
 
+async function localtime(loc) {
+	const input = loc.toLowerCase().trim();
+	let local = input;
+
+	  if (input.indexOf(",") > -1) {
+	     const [city, country] = input.split(/\s*,\s*/);
+	    local = `${country.replace(/\s+/g, '-')}/${city.replace(/\s+/g, '-')}`;
+	  } 
+
+  	console.log(local);
+	const date_time = await exec(`xidel -s "https://www.timeanddate.com/worldclock/${local}" -e '//*[@id="ct"]/text()'`);
+	const date_date = await exec(`xidel -s "https://www.timeanddate.com/worldclock/${local}" -e '//*[@id="ctdat"]/text()'`);
+
+	console.log('date_time: ', date_time.stdout);
+	console.log('date_date: ', date_date.stdout);
+	return `${input}: ${date_time.stdout.trim()} ${date_date.stdout.trim()}`;
+};
 
 async function stock(ticker) {
 	const res = await exec(`xidel 'https://www.marketwatch.com/investing/stock/${ticker}' -e '//div[@class="intraday__data"]|//div[@class="intraday__volume"]' | tr -s '\n' ' '`);
