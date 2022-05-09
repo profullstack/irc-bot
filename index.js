@@ -355,12 +355,14 @@ async function localtime(loc) {
 	const input = loc.toLowerCase().trim();
 	let local = input;
 
-	  if (input.indexOf(",") > -1) {
-	     const [city, country] = input.split(/\s*,\s*/);
-	    local = `${country.replace(/\s+/g, '-')}/${city.replace(/\s+/g, '-')}`;
-	  } 
+	if (input.indexOf(",") > -1) {
+		const [city, country] = input.split(/\s*,\s*/);
 
-  	console.log(local);
+		local = `${country.replace(/\s+/g, '-')}/${city.replace(/\s+/g, '-')}`;
+		input = `${city}, ${country}`;
+	} 
+
+	console.log(local);
 	const date_time = await exec(`xidel -s "https://www.timeanddate.com/worldclock/${local}" -e '//*[@id="ct"]/text()'`);
 	const date_date = await exec(`xidel -s "https://www.timeanddate.com/worldclock/${local}" -e '//*[@id="ctdat"]/text()'`);
 
