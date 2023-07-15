@@ -14,7 +14,7 @@ const servers = [
 		bot.connect({
 			host: server,
 			port: 6667,
-			nick: 'mywsbbot100',
+			nick: 'chovybot',
 			account: {
 					account: 'mywsbbot100',
 					password: 'asdf1234',
@@ -38,6 +38,7 @@ async function doStuff(bot) {
 		bot.join('#polkadot');
 		bot.join('#trading');
 		bot.join('#bitcoin-pricetalk');
+		bot.join('#primate');
 	}, 60000);
 
 	bot.on('raw', event => {
@@ -85,8 +86,8 @@ async function doStuff(bot) {
 		console.log(event);
 		const url = event.message.match(/(https?:\/\/[^\s]+)/)[1];
 		const res = await cuttly(url);
-		// event.reply(`${res.url.title}: ${res.url.shortLink}`);
-		event.reply(`${res.url.title}`);
+		event.reply(`${res.url.title}: ${res.url.shortLink}`);
+		//event.reply(`${res.url.title}`);
 	});
 
 	bot.matchMessage(/(?:^|\W)(hot|damn)(?:$|\W)/, async (event) => {
@@ -219,14 +220,14 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.hot/, async (event) => {
 		console.log(event);
-		const res = await get('https://www.reddit.com/r/wallstreetbets/hot.json');
+		const res = await get('https://www.reddit.com/hot.json');
 		const item = res.data.children[3].data;
 		event.reply(`${item.title}: https://reddit.com/${item.id}`);
 	});
 
 	bot.matchMessage(/^\.new$/, async (event) => {
 		console.log(event);
-		const res = await get('https://www.reddit.com/r/wallstreetbets/new.json');
+		const res = await get('https://www.reddit.com/new.json');
 		const item = res.data.children[0].data;
 		event.reply(`${item.title}: https://reddit.com/${item.id}`);
 	});
@@ -236,7 +237,7 @@ async function doStuff(bot) {
 
 		try {
 			const sort = event.message.split(' ');
-			const res = await get(`https://www.reddit.com/r/wallstreetbets/search.json?sort=${sort[1] || 'new'}&q=flair%3ADD&restrict_sr=on&t=day`);
+			const res = await get(`https://www.reddit.com/search.json?sort=${sort[1] || 'new'}&restrict_sr=on&t=day`);
 			const item = res.data.children[0].data;
 			event.reply(`${item.title}: https://reddit.com/${item.id}`);
 		} catch(err) {
@@ -258,8 +259,8 @@ async function doStuff(bot) {
 	bot.matchMessage(/^\.ball/, async (event) => {
 		console.log(event);
 		const q = event.message.match(/^.ball (.*)$/)[1];
-		const res = await get(`https://8ball.delegator.com/magic/JSON/${encodeURIComponent(q)}`);
-		event.reply(`${res.magic.question}: ${res.magic.answer}`);
+		const res = await get(`https://www.eightballapi.com/api?question=${encodeURIComponent(q)}`);
+		event.reply(`${q}: ${res.reading}`);
 	});
 
 	bot.matchMessage(/^\.fortune/, async (event) => {
@@ -316,12 +317,13 @@ async function doStuff(bot) {
 	bot.matchMessage(/^\.joinall/, function(event) {
 		console.log(event);
 		const chan = event.message.split(' ')[1];
-		bot.join('##wallstreetbets');
-		bot.join('##altstreetbets');
-		bot.join('##economics');
+		bot.join('#wallstreetbets');
+		bot.join('#altstreetbets');
+		bot.join('#economics');
 		bot.join('#litecoin');
 		bot.join('#polkadot');
 		bot.join('#trading');
+		bot.join('#primate');
 	});
 
 	bot.matchMessage(/^\.join /, function(event) {
