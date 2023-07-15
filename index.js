@@ -6,6 +6,10 @@ const exec = util.promisify(require('child_process').exec);
 
 env.config();
 
+const ignore = [
+	'gpbot',
+];
+
 const { IRC_NICK:nick, IRC_ACCOUNT:account, IRC_PASSWORD:password, IRC_EMAIL:email, CUTTLY_API_KEY } = process.env;
 const servers = [
 //	'irc.freenode.net',
@@ -53,6 +57,8 @@ async function doStuff(bot) {
 	//bot.join('##wallstreetbets');
 
 	bot.matchMessage(/^\.help/, async (event) => {
+		if (!beforeMessage(event)) return;
+
 		console.log(event);
 		const lines = `Available commands:
 	 .c <crypto>
@@ -89,6 +95,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/https?:\/\/[^\s+]/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const url = event.message.match(/(https?:\/\/[^\s]+)/)[1];
 		const res = await cuttly(url);
 		event.reply(`${res.url.title}: ${res.url.shortLink}`);
@@ -97,12 +104,14 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/(?:^|\W)(hot|damn)(?:$|\W)/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		event.reply(`${event.nick} 🚀🚀🔥🔥`);
 	});
 
 	/*
 	bot.matchMessage(/(?:^|\W)(fuck|shit)(?:$|\W)/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		event.reply(`${event.nick} did you just swear???? what the fuck dude, you can't be swearing in here!`);
 	});
 	*/
@@ -110,6 +119,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.s /, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const ticker = event.message.split(' ')[1];
 		const res = await stock(ticker);
 		event.reply(`${ticker.toUpperCase()}: ${res}`);
@@ -117,6 +127,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.t /, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const loc = event.message.split(/^\.t /)[1];
 		console.log('msg: ', event.message);
 		console.log('loc: ', loc);
@@ -127,6 +138,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.c /, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const ticker = event.message.split(' ')[1];
 		const res = await crypto(ticker);
 		if (!res.data[0]) return;
@@ -136,6 +148,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.amt c/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const ticker = event.message.split(' ')[2];
 		const amt  = event.message.split(' ')[3];
 		const res = await crypto(ticker);
@@ -146,6 +159,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.amt s/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const ticker = event.message.split(' ')[2];
 		const amt  = event.message.split(' ')[3];
 		const res = await stock(ticker);
@@ -156,6 +170,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.short /, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const url = event.message.split(' ')[1];
 		const res = await cuttly(url);
 		event.reply(`${res.url.title}: ${res.url.shortLink}`);
@@ -163,35 +178,41 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.joke/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await get('https://v2.jokeapi.dev/joke/Any?type=single');
 		event.reply(`${res.category}: ${res.joke}`);
 	});
 
 	bot.matchMessage(/^\.moon/, async (event) => {
+		if (!beforeMessage(event)) return;
 		event.reply(`🌎 ° 🌓 • .°• 🚀 ✯ ★ * ° 🛰 °· 🪐 . • ° ★ • ☄ ▁▂▃▄▅▆▇▇▆▅▄▃▁▂ Hold till we See The moon 🔥🔥`);
 	});
 
 
 	bot.matchMessage(/^\.shorts/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await shorts();
 		event.reply(`short interest: ${res} 🚀🚀🚀💎🙌🦍`);
 	});
 
 	bot.matchMessage(/^\.movers/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await movers();
 		event.reply(`movers: ticker movement price -- ${res} 🚀🚀🚀💎🙌🦍`);
 	});
 
 	bot.matchMessage(/^\.ipos/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await ipos();
 		event.reply(`ipos: ${res} 🚀🚀🚀💎🙌🦍`);
 	});
 
 	bot.matchMessage(/^\.news /, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const ticker = event.message.split(' ')[1]
 		const res = await news(ticker);
 		event.reply(`${ticker.toUpperCase()} - ${res}`);
@@ -199,6 +220,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.convert/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const [ cmd, amt, from, to ] = event.message.split(' ')
 		const res = await convert(from, to);
 		const amount = res[to.toUpperCase()] * amt;
@@ -208,6 +230,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.time/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		let [ city, country ] = event.message.split(',')
 		city = city.replace('.time', '').trim().replace(/\s+/g, '-');
 		country = country.trim().replace(/\s+/g, '-');
@@ -219,12 +242,14 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.penny/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await penny();
 		event.reply(`penny stocks: ${res} 🚀🚀🚀💎🙌🦍`);
 	});
 
 	bot.matchMessage(/^\.hot/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await get('https://www.reddit.com/hot.json');
 		const item = res.data.children[3].data;
 		event.reply(`${item.title}: https://reddit.com/${item.id}`);
@@ -232,6 +257,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.new$/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await get('https://www.reddit.com/new.json');
 		const item = res.data.children[0].data;
 		event.reply(`${item.title}: https://reddit.com/${item.id}`);
@@ -239,6 +265,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.dd/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 
 		try {
 			const sort = event.message.split(' ');
@@ -252,6 +279,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.brisk /, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const opts = event.message.split(' ');
 		const url = `https://briskreader.com/api/1/${opts[1]}s/${opts[1] === 'topic' ? opts[2] : opts[2].toUpperCase()}`
 		console.log(url);
@@ -263,6 +291,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.ball/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const q = event.message.match(/^.ball (.*)$/)[1];
 		const res = await get(`https://www.eightballapi.com/api?question=${encodeURIComponent(q)}`);
 		event.reply(`${q}: ${res.reading}`);
@@ -270,6 +299,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.fortune/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const res = await fortune();
 
 		for (let line of res) {
@@ -279,6 +309,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.cowsay/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const quote = event.message.match(/^\.cowsay (.*)/)[1];
 		console.log(quote);
 		const res = await cowsay(quote);
@@ -292,6 +323,7 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.trend/, async (event) => {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		try {
 			const stocks = await get('https://api.swaggystocks.com/wsb/sentiment/top?limit=5');
 			const cryptos = await get('https://http-api.livecoinwatch.com/coins?offset=0&limit=5&sort=delta.day&order=descending&currency=USD&rank.min=300');
@@ -305,22 +337,26 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.identify/, event => {
 		console.log(bot.options);
+		if (!beforeMessage(event)) return;
 		bot.say('nickserv', `identify ${bot.options.account.account} ${bot.options.account.password}`);
 	});
 
 	bot.matchMessage(/^\.verify/, event => {
 		console.log(bot.options);
+		if (!beforeMessage(event)) return;
 		const pass = event.message.split(' ')[1];
 		bot.say('nickserv', `verify register ${bot.options.account.account} ${pass}`);
 	});
 
 	bot.matchMessage(/^\.register/, event => {
 		console.log(bot.options);
+		if (!beforeMessage(event)) return;
 		bot.say('nickserv', `register ${bot.options.account.password} ${bot.options.account.email}`);
 	});
 
 	bot.matchMessage(/^\.joinall/, function(event) {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const chan = event.message.split(' ')[1];
 		bot.join('#wallstreetbets');
 		bot.join('#altstreetbets');
@@ -333,12 +369,14 @@ async function doStuff(bot) {
 
 	bot.matchMessage(/^\.join /, function(event) {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const chan = event.message.split(' ')[1];
 		bot.join(chan);
 	});
 
 	bot.matchMessage(/^\.part/, function(event) {
 		console.log(event);
+		if (!beforeMessage(event)) return;
 		const chan = event.message.split(' ')[1];
 		bot.part(chan);
 	});
@@ -484,4 +522,8 @@ async function get(url) {
 
 function sleep(milliseconds) {
 	  return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
+
+function beforeMessage(event) {
+	return !ignore.includes(event.nick);
 }
