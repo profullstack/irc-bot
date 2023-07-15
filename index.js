@@ -1,7 +1,12 @@
 const fetch = require('node-fetch');
 const IRC = require('irc-framework');
 const util = require('util');
+const env = require('dotenv-flow');
 const exec = util.promisify(require('child_process').exec);
+
+env.config();
+
+const { IRC_NICK:nick, IRC_ACCOUNT:account, IRC_PASSWORD:password, IRC_EMAIL:email, CUTTLY_API_KEY } = process.env;
 const servers = [
 //	'irc.freenode.net',
 	'irc.libera.chat'
@@ -14,11 +19,11 @@ const servers = [
 		bot.connect({
 			host: server,
 			port: 6667,
-			nick: 'chovybot',
+			nick,
 			account: {
-					account: 'mywsbbot100',
-					password: 'asdf1234',
-					email: 'chovy@pm.me',
+					account,
+					password,
+					email,
 			},
 		});
 
@@ -462,8 +467,7 @@ async function crypto(pair) {
 };
 
 async function cuttly(url) {
-	const res = await get(`https://cutt.ly/api/api.php?key=42c4bc34bdff9b4b2237cd709e11cf95f2fe3&short=${encodeURIComponent(url)}`);
-	console.log('res: ', res);
+	const res = await get(`https://cutt.ly/api/api.php?key=${CUTTLY_API_KEY}&short=${encodeURIComponent(url)}`); console.log('res: ', res);
 	return res;
 };
 
