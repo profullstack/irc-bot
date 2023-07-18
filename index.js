@@ -48,6 +48,7 @@ async function doStuff(bot) {
 		bot.join('#trading');
 		bot.join('#bitcoin-pricetalk');
 		bot.join('#primate');
+		bot.join('#profullstack');
 	}, 60000);
 
 	bot.on('raw', event => {
@@ -370,6 +371,7 @@ async function doStuff(bot) {
 		bot.join('#polkadot');
 		bot.join('#trading');
 		bot.join('#primate');
+		bot.join('#profullstack');
 	});
 
 	bot.matchMessage(/^\.join /, function(event) {
