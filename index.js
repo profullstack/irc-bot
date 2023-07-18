@@ -97,6 +97,11 @@ async function doStuff(bot) {
 		console.log(event);
 		if (!beforeMessage(event)) return;
 		const url = event.message.match(/(https?:\/\/[^\s]+)/)[1];
+
+		if (url.length <= 80) {
+			return;
+		}
+
 		const res = await cuttly(url);
 		event.reply(`${res.url.title}: ${res.url.shortLink}`);
 		//event.reply(`${res.url.title}`);
