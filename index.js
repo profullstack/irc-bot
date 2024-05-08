@@ -47,8 +47,8 @@ async function doStuff(bot) {
 		bot.join('#polkadot');
 		bot.join('#trading');
 		bot.join('#bitcoin-pricetalk');
-		bot.join('#primate');
 		bot.join('#profullstack');
+		bot.join('#primate');
 	}, 60000);
 
 	bot.on('raw', event => {
@@ -81,10 +81,12 @@ async function doStuff(bot) {
 	 .amt s <ticker> <amount>
 	 .movers
 	 .ipos
+	 .earnings
 	 .news <ticker>
 	 .convert <amount> <from> <to>
 	 .time london, uk
 	 .fortune
+	 .splits <reverse>
 	 .t
 	`.split('\n');
 
@@ -149,7 +151,7 @@ async function doStuff(bot) {
 		const res = await crypto(ticker);
 		if (!res.data[0]) return;
 		const data = res.data[0];
-		event.reply(`${ticker.toUpperCase()}: ${data.price} volume: ${data.volume} rank: ${data.rank}`);
+		event.reply(`${ticker.toUpperCase()}: $${data.price} gain/loss: ${data.delta.hour}% 1 hour, ${data.delta.day}% 1 day. volume: ${data.volume} ${data.deltav.hour}% 1 hour, ${data.deltav.day}% 1 day. rank: ${data.rank}`);
 	});
 
 	bot.matchMessage(/^\.amt c/, async (event) => {
@@ -216,7 +218,14 @@ async function doStuff(bot) {
 		event.reply(`ipos: ${res} 🚀🚀🚀💎🙌🦍`);
 	});
 
-	bot.matchMessage(/^\.news /, async (event) => {
+	bot.matchMessage(/^\.earnings/, async (event) => {
+		console.log(event);
+		if (!beforeMessage(event)) return;
+		const res = await earnings();
+		event.reply(`earnings: ${res} 🚀🚀🚀💎🙌🦍`);
+	});
+
+bot.matchMessage(/^\.news /, async (event) => {
 		console.log(event);
 		if (!beforeMessage(event)) return;
 		const ticker = event.message.split(' ')[1]
@@ -303,6 +312,15 @@ async function doStuff(bot) {
 		event.reply(`${q}: ${res.reading}`);
 	});
 
+	bot.matchMessage(/^\.splits/, async (event) => {
+		console.log(event);
+		if (!beforeMessage(event)) return;
+		const csv = await exec(`xidel -s 'https://finance.yahoo.com/calendar/splits' -e '//table/tbody/tr / string-join(td, ", ")'`);
+	
+		console.log(csv);
+		event.reply(`${csv.stdout}`);
+	});
+
 	bot.matchMessage(/^\.fortune/, async (event) => {
 		console.log(event);
 		if (!beforeMessage(event)) return;
@@ -370,8 +388,8 @@ async function doStuff(bot) {
 		bot.join('#litecoin');
 		bot.join('#polkadot');
 		bot.join('#trading');
-		bot.join('#primate');
 		bot.join('#profullstack');
+		bot.join('#primate');
 	});
 
 	bot.matchMessage(/^\.join /, function(event) {
@@ -460,6 +478,15 @@ async function ipos() {
 	return res.stdout;
 };
 
+async function earnings() {
+	const res = await exec(`xidel https://www.marketwatch.com/tools/earnings-calendar --xquery '
+		    for $row in //table/tbody/tr let $name := $row/td[1]/*[1]/normalize-space(text()) let $ticker := $row/td[2]/text() let $estimate := $row/td[4]/*/text() let $actual := $row/td[5]/*/normalize-space(text()) where boolean($name) and boolean($estimate) and boolean($actual) and not(contains($ticker, ".U")) order by $estimate descending return <stock>({$ticker}) {$name}: {$estimate} {$actual}</stock>' | head -n 5 | tr '\n' ' '`);
+
+	console.log('res: ', res);
+	return res.stdout;
+};
+
+
 async function convert(from, to) {
 	const res = await get(`https://min-api.cryptocompare.com/data/price?fsym=${from.toUpperCase()}&tsyms=${to.toUpperCase()}`);
 	console.log('res: ', res);
@@ -506,7 +533,9 @@ async function crypto(pair) {
 		ticker.push('usd');
 	}
 
-	const res = await get(`https://http-api.livecoinwatch.com/coins?currency=${ticker[1].toUpperCase()}&only=${ticker[0].toUpperCase()}`);
+	const url = `https://http-api.livecoinwatch.com/coins?currency=${ticker[1].toUpperCase()}&only=${ticker[0].toUpperCase()}`;
+	console.log(url);
+	const res = await get(url);
 	console.log('res: ', res);
 	return res;
 };
@@ -517,11 +546,15 @@ async function cuttly(url) {
 };
 
 
-async function get(url) {
+async function get(url, text = false) {
 	const res = await fetch(url);
 
 	if (res.ok) {
-		return res.json();
+		if (text) {
+			return res.text();
+		} else {
+			return res.json();
+		}
 	}
 
 	throw(res);
